@@ -15,4 +15,10 @@ func main() {
 	a := &j
 	*a = *a / 37.0
 	fmt.Println(j)
+
+	var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}
+
+	for i, v := range pow {
+		fmt.Printf("2**%d = %d\n", i, v)
+	}
 }
