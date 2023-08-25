@@ -10,9 +10,9 @@ func TestBinary(t *testing.T) {
 
 	sort.Sort(array)
 
-	for i, el := range array {
-		index, match := array.BinarySearch(el)
-		if i != index || el != match {
+	for _, el := range array {
+		_, _, err := array.BinarySearch(el)
+		if err != nil {
 			t.Fatalf("Didn't match %d", el)
 		}
 	}

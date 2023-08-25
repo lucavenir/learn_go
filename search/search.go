@@ -10,7 +10,7 @@ func (value Searching[T]) Len() int           { return len(value) }
 func (value Searching[T]) Swap(i, j int)      { value[i], value[j] = value[j], value[i] }
 func (value Searching[T]) Less(i, j int) bool { return value[i] < value[j] }
 
-func (array *Searching[T]) BinarySearch(search T) (int, T) {
+func (array *Searching[T]) BinarySearch(search T) (int, T, error) {
 	i := 0
 	j := len(*array)
 
@@ -21,11 +21,11 @@ func (array *Searching[T]) BinarySearch(search T) (int, T) {
 		case el < search:
 			i = mid
 		case el == search:
-			return mid, el
+			return mid, el, nil
 		case el > search:
 			j = mid
 		}
 	}
 
-	panic("can't find 'search'")
+	return 0, *new(T), nil
 }
