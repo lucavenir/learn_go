@@ -1,24 +1,112 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
-	"sync"
+	"net/url"
 	"time"
 )
 
-var wg = &sync.WaitGroup{}
+type Scam struct {
+	Attempted int
+	Completed int
+}
 
 func main() {
-	for i := 0; i < 10000; i++ {
-		time.Sleep(100 * time.Millisecond)
-		wg.Add(1)
-		go scamChain()
+	scamCh := make(chan Scam, 1_000_000)
+
+	requests := 0
+	completed := 0
+
+	for i := 0; i < 15_000; i++ {
+		log.Println("Ciao!", i)
+		go scamThisScammer(scamCh)
 	}
-	wg.Wait()
+
+	for r := range scamCh {
+		requests += r.Attempted
+		completed += r.Completed
+		log.Println("Attempted: ", requests, "Completed:", completed)
+	}
+}
+
+func scamThisScammer(ch chan Scam) {
+	const getUrl = "https://launcherpod.info/5f39888832e18d47260016cebf177f14"
+	const postUrl = "https://amplinesrv.com/survey/saveAnswer"
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from:", r)
+		}
+	}()
+	for true {
+		ch <- Scam{1, 0}
+		sendGetRequest("GET launcherpod.info", getUrl)
+		sendPostRequest("POST amplinesrv.com", postUrl)
+		ch <- Scam{0, 1}
+	}
+}
+
+func sendPostRequest(title string, link string) {
+	values := url.Values{
+		"bid":  {stringWithCharset(9)},
+		"sid":  {stringWithCharset(2)},
+		"lid":  {stringWithCharset(1)},
+		"cnt":  {stringWithCharset(3)},
+		"qid":  {stringWithCharset(3)},
+		"aid":  {stringWithCharset(3)},
+		"step": {stringWithCharset(1)},
+		"pos":  {fmt.Sprintf("%t", flipACoin())},
+		"cmp":  {"MailSurvey"},
+	}
+	response, err := http.PostForm(link, values)
+	if err != nil {
+		log.Println(err)
+		panic("Can't actually send this request")
+	}
+	defer response.Body.Close()
+	// log.Printf("[%s] Sent: ", title)
+	// log.Println(values)
+	// log.Printf("[%s] Received: ", title)
+	// log.Println(response.StatusCode)
+	if response.StatusCode != 200 {
+		log.Println("Woops, Status Code ", response.StatusCode)
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Println(err)
+			panic("Can't read the response from GET")
+		}
+		log.Println(string(body))
+	}
+}
+
+func sendGetRequest(title string, url string) {
+	response, err := http.Get(url)
+	if err != nil {
+		log.Println(err)
+		panic("Can't send this request")
+	}
+	defer response.Body.Close()
+	// log.Printf("[%s] Received: ", title)
+	// log.Println(response.StatusCode)
+	if response.StatusCode != 200 {
+		log.Println("Woops, Status Code ", response.StatusCode)
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Println(err)
+			panic("Can't read the response from GET")
+		}
+		log.Println(string(body))
+	}
+}
+
+func flipACoin() bool {
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	random := seededRand.Float64()
+	return random < 0.5
 }
 
 func stringWithCharset(length int) string {
@@ -29,54 +117,4 @@ func stringWithCharset(length int) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
-}
-
-func scamChain() {
-	const first = "https://ui-servizi-infonet.162-254-35-167.cprapid.com/std-lsc/it/login2.php"
-	const second = "https://ui-servizi-infonet.162-254-35-167.cprapid.com/std-lsc/it/login3.php"
-	const third = "https://ui-servizi-infonet.162-254-35-167.cprapid.com/std-lsc/it/login4.php"
-
-	defer wg.Done()
-	for true {
-		time.Sleep(100 * time.Millisecond)
-
-		defer func() {
-			if r := recover(); r != nil {
-				log.Print("Recovered from panic: ")
-				log.Println(r)
-			}
-		}()
-		scamTheScammer("First request", first, map[string]any{
-			"cod":   stringWithCharset(7),
-			"pin":   stringWithCharset(5),
-			"Invia": "",
-		})
-		scamTheScammer("Second request", second, map[string]any{
-			"otp":   stringWithCharset(4),
-			"Invia": "",
-		})
-		scamTheScammer("Third request", third, map[string]any{
-			"otp":   stringWithCharset(4),
-			"Invia": "",
-		})
-	}
-}
-
-func scamTheScammer(title string, url string, data map[string]any) {
-	j, err := json.Marshal(data)
-	if err != nil {
-		log.Println(err)
-		panic("Can't convert data to json")
-	}
-	reader := bytes.NewReader(j)
-	response, err := http.Post(url, "application/json", reader)
-	if err != nil {
-		log.Println(err)
-		panic("Can't actually send this request")
-	}
-	defer response.Body.Close()
-	log.Printf("[%s] Sent: ", title)
-	log.Println(data)
-	log.Printf("[%s] Received: ", title)
-	log.Println(response.StatusCode)
 }
