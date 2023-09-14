@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -15,37 +14,40 @@ type Scam struct {
 	Completed int
 }
 
+var totalErrors = 0
+
 func main() {
-	scamCh := make(chan Scam, 1_000_000)
+	scamCh := make(chan Scam, 1_000_000_000)
 
 	requests := 0
 	completed := 0
 
-	for i := 0; i < 15_000; i++ {
+	for i := 0; i < 10; i++ {
 		log.Println("Ciao!", i)
 		go scamThisScammer(scamCh)
+		time.Sleep(1 * time.Nanosecond)
 	}
 
 	for r := range scamCh {
 		requests += r.Attempted
 		completed += r.Completed
-		log.Println("Attempted: ", requests, "Completed:", completed)
+		log.Println("Attempted: ", requests, "Completed:", completed, "Errors until now:", totalErrors)
 	}
 }
 
 func scamThisScammer(ch chan Scam) {
-	const getUrl = "https://launcherpod.info/5f39888832e18d47260016cebf177f14"
-	const postUrl = "https://amplinesrv.com/survey/saveAnswer"
+	const getUrl = "https://launchers.world/1f49e875da6d721297ff262b54e14588"
+	const anotherGetUrl = "http://clarck.online/cl/370045_smd/130/361731/2870/52"
 
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("Recovered from:", r)
+			return
 		}
 	}()
 	for true {
 		ch <- Scam{1, 0}
-		sendGetRequest("GET launcherpod.info", getUrl)
-		sendPostRequest("POST amplinesrv.com", postUrl)
+		sendGetRequest("GET AWS", getUrl)
+		sendGetRequest("GET clark.online", anotherGetUrl)
 		ch <- Scam{0, 1}
 	}
 }
@@ -73,13 +75,14 @@ func sendPostRequest(title string, link string) {
 	// log.Printf("[%s] Received: ", title)
 	// log.Println(response.StatusCode)
 	if response.StatusCode != 200 {
-		log.Println("Woops, Status Code ", response.StatusCode)
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			log.Println(err)
-			panic("Can't read the response from GET")
-		}
-		log.Println(string(body))
+		// 	log.Println("Woops, Status Code ", response.StatusCode)
+		// 	body, err := io.ReadAll(response.Body)
+		// 	if err != nil {
+		// 		log.Println(err)
+		// 		panic("Can't read the response from GET")
+		// 	}
+		// 	log.Println(string(body))
+		totalErrors += 1
 	}
 }
 
@@ -93,13 +96,14 @@ func sendGetRequest(title string, url string) {
 	// log.Printf("[%s] Received: ", title)
 	// log.Println(response.StatusCode)
 	if response.StatusCode != 200 {
-		log.Println("Woops, Status Code ", response.StatusCode)
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			log.Println(err)
-			panic("Can't read the response from GET")
-		}
-		log.Println(string(body))
+		// 	log.Println("Woops, Status Code ", response.StatusCode)
+		// 	body, err := io.ReadAll(response.Body)
+		// 	if err != nil {
+		// 		log.Println(err)
+		// 		panic("Can't read the response from GET")
+		// 	}
+		// 	log.Println(string(body))
+		totalErrors += 1
 	}
 }
 
