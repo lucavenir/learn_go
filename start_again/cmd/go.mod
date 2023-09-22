@@ -1,3 +1,3 @@
-module start_again/cmd
+module cmd
 
 go 1.21.0

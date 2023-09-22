@@ -9,6 +9,9 @@ func main() {
 	var i uint64
 	fmt.Println(i)
 
-	backTicks := `Hello world`
-	fmt.Println(backTicks)
+	switch i {
+	case 0:
+		backTicks := `Hello world`
+		fmt.Println(backTicks)
+	}
 }
