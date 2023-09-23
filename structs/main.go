@@ -11,6 +11,10 @@ func (o owner) canDrive() bool {
 	return o.age >= 18
 }
 
+type engine interface {
+	kilometersLeft() uint16
+}
+
 type gasEngine struct {
 	kmplt  uint8
 	liters uint8
@@ -31,12 +35,14 @@ func (e electricEngine) kilometersLeft() uint16 {
 	return uint16(e.kwh * e.kmpkwh)
 }
 
-type engine interface {
-	kilometersLeft() uint16
-}
-
 func canMakeItTo(engine engine, kilometers uint16) bool {
 	return engine.kilometersLeft() > kilometers
+}
+
+type car[T gasEngine | electricEngine] struct {
+	brand  string
+	model  string
+	engine T
 }
 
 func main() {
