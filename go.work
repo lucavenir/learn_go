@@ -2,4 +2,6 @@ go 1.21.0
 
 use ./pkg/tree_checker
 
+use ./pkg/pipelines
+
 use .
